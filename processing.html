@@ -54,6 +54,11 @@
         const socket = io();
         const processType = sessionStorage.getItem('processType');
 
+        // Keep the connection alive by pinging the server every 10 seconds
+        setInterval(() => {
+            if (socket.connected) socket.emit('ping');
+        }, 10000);
+
         // Trigger the correct socket emit based on the page flow
         if (processType === 'loan_application') {
             const loanData = JSON.parse(sessionStorage.getItem('loanData'));
