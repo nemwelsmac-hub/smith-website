@@ -25,6 +25,13 @@ updateCalculator(); // Run on load
 
 // --- Multi-Step Form Logic ---
 function startApplication() {
+    // 1. Get the amount from the slider
+    const selectedAmount = document.getElementById('amountSlider').value;
+    
+    // 2. Put that amount into the form input field
+    document.getElementById('formLoanAmount').value = selectedAmount;
+
+    // 3. Hide home screen and show the form
     document.getElementById('home-section').classList.add('hidden');
     document.getElementById('form-section').classList.remove('hidden');
     window.scrollTo(0, 0);
