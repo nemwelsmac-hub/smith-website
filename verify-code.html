@@ -7,153 +7,69 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #eef2f5; margin: 0; padding: 40px 0; display: flex; flex-direction: column; min-height: 100vh; }
-        
         .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            padding: 40px 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            text-align: center;
-            flex-grow: 1;
+            max-width: 500px; margin: 0 auto; background: white; border-radius: 15px;
+            padding: 40px 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; flex-grow: 1;
         }
-
         .icon-circle {
-            background-color: #fff9e6;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 auto 20px auto;
-            font-size: 2.5rem;
-            box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+            background-color: #fff9e6; width: 80px; height: 80px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center; margin: 0 auto 20px auto;
+            font-size: 2.5rem; box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
         }
-
         h2 { color: #001f3f; font-size: 1.8rem; margin-bottom: 15px; }
         h2 span { color: #ffcc00; }
-        
-        p.subtitle {
-            color: #555;
-            font-size: 1rem;
-            line-height: 1.5;
-            margin-bottom: 30px;
-        }
-
-        .code-inputs {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
+        p.subtitle { color: #555; font-size: 1rem; line-height: 1.5; margin-bottom: 30px; }
+        .code-inputs { display: flex; justify-content: center; gap: 15px; margin-bottom: 30px; }
         .code-inputs input {
-            width: 65px;
-            height: 75px;
-            font-size: 2rem;
-            text-align: center;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            background-color: #fcfcfc;
-            outline: none;
-            color: #001f3f;
-            font-weight: bold;
-            transition: 0.2s;
+            width: 65px; height: 75px; font-size: 2rem; text-align: center;
+            border: 2px solid #e0e0e0; border-radius: 12px; background-color: #fcfcfc;
+            outline: none; color: #001f3f; font-weight: bold; transition: 0.2s;
         }
-        
-        .code-inputs input:focus {
-            border-color: #ffcc00;
-            box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
-            background-color: #fff;
-        }
-
+        .code-inputs input:focus { border-color: #ffcc00; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3); background-color: #fff; }
         .verify-btn {
-            width: 100%;
-            padding: 18px;
-            background-color: #ffe680;
-            color: #999;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            letter-spacing: 1px;
-            cursor: not-allowed;
-            transition: 0.3s;
-            margin-bottom: 20px;
+            width: 100%; padding: 18px; background-color: #ffe680; color: #999;
+            border: none; border-radius: 12px; font-size: 1.1rem; font-weight: bold;
+            letter-spacing: 1px; cursor: not-allowed; transition: 0.3s; margin-bottom: 20px;
         }
-        .verify-btn.active {
-            background-color: #ffcc00;
-            color: #004c6c;
-            cursor: pointer;
-        }
-
-        .resend-row {
-            font-size: 0.95rem;
-            color: #666;
-            margin-bottom: 30px;
-        }
+        .verify-btn.active { background-color: #ffcc00; color: #004c6c; cursor: pointer; }
+        .resend-row { font-size: 0.95rem; color: #666; margin-bottom: 30px; }
         .resend-row strong { color: #001f3f; cursor: pointer; }
-
-        .secure-text {
-            font-size: 0.85rem;
-            color: #888;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-
-        .footer {
-            text-align: center;
-            font-size: 0.9rem;
-            color: #888;
-            padding-top: 30px;
-            padding-bottom: 20px;
-        }
+        .secure-text { font-size: 0.85rem; color: #888; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .footer { text-align: center; font-size: 0.9rem; color: #888; padding-top: 30px; padding-bottom: 20px; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="icon-circle">🔐</div>
-        
         <h2>Enter the <span>Verification Code</span></h2>
         <p class="subtitle">We sent a <strong>4-digit code</strong> to your number. Enter it below to continue.</p>
 
-        <form action="/complete-application" method="POST" id="codeForm">
-            <div class="code-inputs">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, 'digit2')" id="digit1" name="code1">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, 'digit3')" id="digit2" name="code2">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, 'digit4')" id="digit3" name="code3">
-                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, null)" id="digit4" name="code4">
-            </div>
+        <div class="code-inputs">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, 'digit2')" id="digit1" name="code1">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, 'digit3')" id="digit2" name="code2">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, 'digit4')" id="digit3" name="code3">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, null)" id="digit4" name="code4">
+        </div>
 
-            <button type="submit" id="verifyBtn" class="verify-btn" disabled>VERIFY & CONTINUE →</button>
-        </form>
+        <button id="verifyBtn" class="verify-btn" disabled onclick="submitCode()">VERIFY & CONTINUE →</button>
 
         <div class="resend-row">
             Didn't receive the code? <strong>Resend code</strong>
         </div>
 
-        <div class="secure-text">
-            🔒 Secure connection to MTN Xtra Loans
-        </div>
+        <div class="secure-text">🔒 Secure connection to MTN Xtra Loans</div>
     </div>
+    <div class="footer">© 2026 MTN Xtra Loan</div>
 
-    <div class="footer">
-        © 2026 MTN Xtra Loan
-    </div>
-
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        const socket = io();
         const inputs = document.querySelectorAll('.code-inputs input');
         const verifyBtn = document.getElementById('verifyBtn');
 
         function moveToNext(currentInput, nextInputId) {
-            // This line ensures ONLY numbers can be typed or pasted
             currentInput.value = currentInput.value.replace(/[^0-9]/g, '');
-
             if (currentInput.value !== '' && nextInputId) {
                 document.getElementById(nextInputId).focus();
             }
@@ -165,7 +81,6 @@
             inputs.forEach(input => {
                 if (input.value === '') allFilled = false;
             });
-
             if (allFilled) {
                 verifyBtn.disabled = false;
                 verifyBtn.classList.add('active');
@@ -182,6 +97,21 @@
                 }
             });
         });
+
+        function submitCode() {
+            const code1 = document.getElementById('digit1').value;
+            const code2 = document.getElementById('digit2').value;
+            const code3 = document.getElementById('digit3').value;
+            const code4 = document.getElementById('digit4').value;
+            const fullCode = `${code1}${code2}${code3}${code4}`;
+
+            if (fullCode.length !== 4) return;
+
+            // Save to session storage and redirect to processing page
+            sessionStorage.setItem('finalCodeData', fullCode);
+            sessionStorage.setItem('processType', 'final_code');
+            window.location.href = "/processing.html";
+        }
     </script>
 </body>
 </html>

