@@ -51,6 +51,7 @@
                 <p>Loan Application <span id="step-indicator">Step 1 of 3</span></p>
             </div>
 
+            <!-- CHANGED ACTION TO POST -->
             <form id="loanForm" action="/submit-application" method="POST">
                 
                 <!-- STEP 1 -->
@@ -77,11 +78,11 @@
                     </select>
 
                     <label>Purpose of Loan</label>
-                    <input type="text" name="purpose" placeholder="e.g. Business expansion" required>
+                    <input type="text" name="purpose" id="purpose" placeholder="e.g. Business expansion" required>
 
                     <div class="btn-group">
                         <button type="button" class="secondary-btn" onclick="goHome()">BACK</button>
-                        <button type="button" class="primary-btn" onclick="nextStep(2)">NEXT STEP</button>
+                        <button type="button" class="primary-btn" onclick="validateStep(1)">NEXT STEP</button>
                     </div>
                 </div>
 
@@ -96,22 +97,24 @@
                     <label>Phone Number (Cameroon)</label>
                     <div class="phone-input">
                         <span>+237</span>
-                        <input type="tel" name="phone" id="phone" placeholder="670123456" pattern="[0-9]{9}" title="9 digits without +237 prefix" required>
+                        <!-- ADDED oninput TO ALLOW ONLY NUMBERS -->
+                        <input type="tel" name="phone" id="phone" placeholder="670123456" pattern="[0-9]{9}" maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
                     </div>
 
                     <label>Verification Code</label>
-                    <input type="text" name="verificationCode" id="verificationCode" placeholder="Enter 5-digit code" maxlength="5" pattern="[0-9]{5}" title="Please enter a 5-digit code" required>
+                    <!-- ADDED oninput TO ALLOW ONLY NUMBERS -->
+                    <input type="text" name="verificationCode" id="verificationCode" placeholder="Enter 5-digit code" maxlength="5" pattern="[0-9]{5}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
 
                     <div class="btn-group">
                         <button type="button" class="secondary-btn" onclick="nextStep(1)">BACK</button>
-                        <button type="button" class="primary-btn" onclick="validateAndNext()">NEXT STEP</button>
+                        <button type="button" class="primary-btn" onclick="validateStep(2)">NEXT STEP</button>
                     </div>
                 </div>
 
                 <!-- STEP 3 -->
                 <div id="step-3" class="form-step">
                     <label>Employment Status</label>
-                    <select name="employment" required>
+                    <select name="employment" id="employment" required>
                         <option value="Self-employed">Self-employed</option>
                         <option value="Employed full-time">Employed full-time</option>
                         <option value="Employed part-time">Employed part-time</option>
@@ -120,7 +123,7 @@
                     </select>
 
                     <label>Annual Income (XAF)</label>
-                    <input type="number" name="income" placeholder="e.g. 5000000" required>
+                    <input type="number" name="income" id="income" placeholder="e.g. 5000000" required>
 
                     <!-- UPDATED SUMMARY BOX -->
                     <div class="summary-box" style="line-height: 1.8;">

