@@ -25,11 +25,13 @@ updateCalculator(); // Run on load
 
 // --- Multi-Step Form Logic ---
 function startApplication() {
-    // 1. Get the amount from the slider
+    // 1. Get values from the calculator
     const selectedAmount = document.getElementById('amountSlider').value;
+    const selectedTerm = document.getElementById('termSelect').value;
     
-    // 2. Put that amount into the form input field
+    // 2. Put those values into the Step 1 form
     document.getElementById('formLoanAmount').value = selectedAmount;
+    document.getElementById('formLoanTerm').value = selectedTerm;
 
     // 3. Hide home screen and show the form
     document.getElementById('home-section').classList.add('hidden');
@@ -53,11 +55,18 @@ function nextStep(stepNumber) {
     // Update progress indicator
     document.getElementById('step-indicator').innerText = `Step ${stepNumber} of 3`;
 
-    // If moving to step 3, update the summary
+    // If moving to step 3, populate the summary details
     if (stepNumber === 3) {
         const firstName = document.getElementById('firstName').value;
         const lastName = document.getElementById('lastName').value;
+        const phone = document.getElementById('phone').value;
+        const amount = document.getElementById('formLoanAmount').value;
+        const term = document.getElementById('formLoanTerm').value;
+
         document.getElementById('sumName').innerText = `${firstName} ${lastName}`;
+        document.getElementById('sumPhone').innerText = `+237 ${phone}`;
+        document.getElementById('sumAmount').innerText = parseInt(amount).toLocaleString();
+        document.getElementById('sumTerm').innerText = term;
     }
 }
 
