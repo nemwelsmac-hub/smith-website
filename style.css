@@ -1,0 +1,196 @@
+/* MTN Brand Colors */
+:root {
+    --mtn-yellow: #ffcc00;
+    --mtn-blue: #004c6c;
+    --bg-color: #f4f7f6;
+    --text-color: #333;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+header {
+    background-color: var(--mtn-blue);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+header .logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+header h1 {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.container {
+    flex: 1;
+    padding: 20px;
+    max-width: 500px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--mtn-blue);
+    font-size: 1.5rem;
+}
+
+/* Calculator Card */
+.calculator-card, .form-step {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--mtn-blue);
+}
+
+input[type="range"] {
+    width: 100%;
+    margin-bottom: 10px;
+    accent-color: var(--mtn-yellow);
+}
+
+input[type="text"], input[type="number"], input[type="tel"], select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.result-box {
+    background-color: #eef5f9;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.result-box p {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.result-box h2 {
+    margin: 5px 0 0 0;
+    color: var(--mtn-blue);
+}
+
+/* Buttons */
+.primary-btn, .secondary-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.primary-btn {
+    background-color: var(--mtn-yellow);
+    color: var(--mtn-blue);
+}
+
+.primary-btn:hover {
+    background-color: #e6b800;
+}
+
+.secondary-btn {
+    background-color: #e0e0e0;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.secondary-btn:hover {
+    background-color: #ccc;
+}
+
+.btn-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-group button {
+    margin-bottom: 0;
+}
+
+/* Form Steps */
+.hidden {
+    display: none;
+}
+
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+}
+
+.progress-bar {
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--mtn-blue);
+}
+
+.phone-input {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.phone-input span {
+    background: #eee;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    font-weight: bold;
+}
+
+.phone-input input {
+    margin-bottom: 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.summary-box {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
