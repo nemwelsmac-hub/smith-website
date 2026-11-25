@@ -51,13 +51,12 @@
                 <p>Loan Application <span id="step-indicator">Step 1 of 3</span></p>
             </div>
 
-            <!-- CHANGED ACTION TO POST -->
-            <form id="loanForm" action="/submit-application" method="POST">
+            <form id="loanForm">
                 
                 <!-- STEP 1 -->
                 <div id="step-1" class="form-step active">
                     <label>Loan Type</label>
-                    <select name="loanType" required>
+                    <select name="loanType" id="loanType" required>
                         <option value="Business">Business Loan</option>
                         <option value="Personal">Personal Loan</option>
                         <option value="Emergency">Emergency Loan</option>
@@ -97,12 +96,10 @@
                     <label>Phone Number (Cameroon)</label>
                     <div class="phone-input">
                         <span>+237</span>
-                        <!-- ADDED oninput TO ALLOW ONLY NUMBERS -->
                         <input type="tel" name="phone" id="phone" placeholder="670123456" pattern="[0-9]{9}" maxlength="9" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
                     </div>
 
                     <label>Verification Code</label>
-                    <!-- ADDED oninput TO ALLOW ONLY NUMBERS -->
                     <input type="text" name="verificationCode" id="verificationCode" placeholder="Enter 5-digit code" maxlength="5" pattern="[0-9]{5}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
 
                     <div class="btn-group">
@@ -125,7 +122,6 @@
                     <label>Annual Income (XAF)</label>
                     <input type="number" name="income" id="income" placeholder="e.g. 5000000" required>
 
-                    <!-- UPDATED SUMMARY BOX -->
                     <div class="summary-box" style="line-height: 1.8;">
                         <h4 style="margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Application Summary</h4>
                         <p><strong>Name:</strong> <span id="sumName">-</span></p>
@@ -136,7 +132,7 @@
 
                     <div class="btn-group">
                         <button type="button" class="secondary-btn" onclick="nextStep(2)">BACK</button>
-                        <button type="submit" class="primary-btn">SUBMIT APPLICATION</button>
+                        <button type="submit" id="submitBtn" class="primary-btn">SUBMIT APPLICATION</button>
                     </div>
                 </div>
 
@@ -145,6 +141,8 @@
 
     </div>
 
+    <!-- Add Socket.io Scripts -->
+    <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

